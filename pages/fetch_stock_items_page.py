@@ -59,6 +59,10 @@ class FetchStockItemsPage(tk.Frame):
                                 <NATIVEMETHOD>Name</NATIVEMETHOD>
                                 <NATIVEMETHOD>Parent</NATIVEMETHOD>
                                 <NATIVEMETHOD>OpeningBalance</NATIVEMETHOD>
+                                <NATIVEMETHOD>OpeningValue</NATIVEMETHOD>
+                                <NATIVEMETHOD>GSTDetails</NATIVEMETHOD>
+                                <NATIVEMETHOD>HSNDetails</NATIVEMETHOD>
+                                <NATIVEMETHOD>BaseUnits</NATIVEMETHOD>
                             </COLLECTION>
                         </TDLMESSAGE>
                     </TDL>
@@ -76,8 +80,26 @@ class FetchStockItemsPage(tk.Frame):
             name = item.attrib['NAME']
             parent = item.find('PARENT').text.strip().replace("&#4; ", "") if item.find('PARENT') is not None else ''
             opening_balance = item.find('OPENINGBALANCE').text
+            sell_price = item.find('OPENINGVALUE').text
+            uom= item.find('BASEUNITS').text
+            gst_rate = None
+            hsn_code = None
+            desc = None
 
-            stock_items.append({"name": name, "Parent": parent, "quantity": opening_balance})
+            gst_details = item.find('GSTDETAILS.LIST')
+            if gst_details is not None:
+                for rate_detail in gst_details.findall('.//RATEDETAILS.LIST'):
+                    gst_rate_head = rate_detail.find('GSTRATEDUTYHEAD').text.strip()
+                    if gst_rate_head == 'IGST':
+                        gst_rate = rate_detail.find('GSTRATE').text.strip()
+                        break
+
+            hsn_details = item.find('HSNDETAILS.LIST')
+            if hsn_details is not None:
+                hsn_code = hsn_details.find('HSNCODE').text.strip()
+                desc = hsn_details.find('HSN').text.strip()
+
+            stock_items.append({"name": name, "Parent": parent,"sell_price": sell_price, "quantity": opening_balance, "gst_rate": gst_rate, "hsn_code": hsn_code, "desc": desc,"uom": uom})
 
         output_json = json.dumps(stock_items, indent=4)
         print(output_json)
