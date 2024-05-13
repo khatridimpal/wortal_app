@@ -26,7 +26,20 @@ class BranchPage(tk.Frame):
         title_label.pack(pady=10)
 
         self.radio_frame = tk.Frame(self.branch_frame, bg='#F5F5F5')
-        self.radio_frame.pack(pady=15, padx=100)
+        self.radio_frame.pack(pady=5, padx=100)
+
+        self.canvas = tk.Canvas(self.radio_frame, bg="#F5F5F5")
+        self.canvas.pack(side=tk.LEFT, fill="both", expand=True)
+
+        self.scrollbar = tk.Scrollbar(self.radio_frame, orient=tk.VERTICAL, command=self.canvas.yview)
+        self.scrollbar.pack(side=tk.RIGHT, fill="y")
+
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.radio_buttons_frame = tk.Frame(self.canvas,bg="#F5F5F5")
+        self.radio_buttons_frame.bind("<Configure>",lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        self.canvas.create_window((0, 0), window=self.radio_buttons_frame, anchor="nw")
 
         def back_to_business_page():
             self.controller.show_business_page(self.token)
@@ -45,12 +58,14 @@ class BranchPage(tk.Frame):
         self.selected_branch.set(None)
 
         for i,branch in enumerate(branches):
-            radio_button = tk.Radiobutton(self.radio_frame, text=branch["name"], variable=self.selected_branch, value=branch["id"],font=self.label_font,bg="#F5F5F5",fg="#333333", padx=20,pady=4, anchor='w')
+            radio_button = tk.Radiobutton(self.radio_buttons_frame, text=branch["name"], variable=self.selected_branch, value=branch["id"],font=self.label_font,bg="#F5F5F5",fg="#333333", padx=20,pady=4, anchor='w')
             radio_button.grid(row=i, column=0, sticky='w')
 
-        tk.Button(self.branch_frame, width=20, pady=7, text='Submit', bg='#57a1f8', fg='white', border=0, command=self.select_branch).pack()
-        back_button = tk.Button(self.branch_frame, width=20, pady=7, text='Back', bg='#57a1f8', fg='white', border=0, command=back_to_business_page)
-        back_button.pack()
+        submit_button = tk.Button(self.branch_frame, width=10, pady=10, text='Submit', bg='#4CAF50', fg='white', font=self.button_font, border=0, relief="raised", command=self.select_branch)
+        submit_button.place(relx=0.45, rely=0.83, anchor="center")
+
+        back_button = tk.Button(self.branch_frame, width=10, pady=10, text='Back', bg='#F44336', fg='white', font=self.button_font, border=0,relief="raised", command=back_to_business_page)
+        back_button.place(relx=0.6,rely=0.83,anchor="center")
 
     def select_branch(self):
         selected_branch = self.selected_branch.get()

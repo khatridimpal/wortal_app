@@ -47,7 +47,7 @@ class BusinessPage(tk.Frame):
             radio_button = tk.Radiobutton(self.radio_frame, text=business["name"], variable=self.selected_business, value=business["id"],font=self.label_font,bg="#F5F5F5",fg="#333333", padx=20,pady=4, anchor='w')
             radio_button.grid(row=i, column=0, sticky='w')
 
-        submit_button = tk.Button(self.business_frame, width=10, pady=10, text='Submit', bg='#4CAF50', fg='white',font=self.button_font, border=0,relief="raised", command=lambda: self.show_branch_page())
+        submit_button = tk.Button(self.business_frame, width=10, pady=10, text='Submit', bg='#4CAF50', fg='white', font=self.button_font, border=0, relief="raised", command=lambda: self.show_branch_page())
         submit_button.place(relx=0.4,rely=0.8,anchor="center")
 
         back_button = tk.Button(self.business_frame, width=10, pady=10, text='Back', bg='#F44336', fg='white',font=self.button_font, border=0,relief="raised", command=back_to_login)
