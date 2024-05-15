@@ -14,9 +14,13 @@ class WortalApp(tk.Tk):
         self.resizable(False, False)
         self.iconphoto(False, tk.PhotoImage(file="assets/favicon.png"))
 
+        self.container=None
+
         self.show_login_page()
 
     def show_login_page(self):
+        if self.container is not None:
+            self.container.destroy()
         self.container = tk.Frame(self)
         self.container.pack(expand=True, fill="both")
         page = LoginPage(self.container, self)
