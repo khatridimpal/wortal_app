@@ -44,9 +44,9 @@ class WortalApp(tk.Tk):
         page = BranchPage(self.container, self, token, selected_business)
         page.pack(expand=True, fill="both")
 
-    def show_fetch_stock_items_page(self,token, branch_id):
+    def show_fetch_stock_items_page(self,token, branch_id,selected_business):
         self.container.destroy()
         self.container = tk.Frame(self)
         self.container.pack(expand=True, fill="both")
-        page = FetchStockItemsPage(self.container, self, branch_id,token)
+        page = FetchStockItemsPage(self.container, self, branch_id,token,selected_business)
         page.pack(expand=True, fill="both")

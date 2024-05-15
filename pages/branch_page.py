@@ -61,16 +61,16 @@ class BranchPage(tk.Frame):
             radio_button = tk.Radiobutton(self.radio_buttons_frame, text=branch["name"], variable=self.selected_branch, value=branch["id"],font=self.label_font,bg="#F5F5F5",fg="#333333", padx=20,pady=4, anchor='w')
             radio_button.grid(row=i, column=0, sticky='w')
 
-        submit_button = tk.Button(self.branch_frame, width=10, pady=10, text='Submit', bg='#4CAF50', fg='white', font=self.button_font, border=0, relief="raised", command=self.select_branch)
+        submit_button = tk.Button(self.branch_frame, width=10, pady=10, text='Submit', bg='#4CAF50', fg='white', font=self.button_font, border=0, relief="raised", command=lambda: self.select_branch(self.selected_business))
         submit_button.place(relx=0.45, rely=0.83, anchor="center")
 
         back_button = tk.Button(self.branch_frame, width=10, pady=10, text='Back', bg='#F44336', fg='white', font=self.button_font, border=0,relief="raised", command=back_to_business_page)
         back_button.place(relx=0.6,rely=0.83,anchor="center")
 
-    def select_branch(self):
+    def select_branch(self,selected_business):
         selected_branch = self.selected_branch.get()
         if not selected_branch:
             messagebox.showerror("Error", "Please select a branch")
             return
 
-        self.controller.show_fetch_stock_items_page(self.token,selected_branch)
+        self.controller.show_fetch_stock_items_page(self.token,selected_branch,selected_business)
