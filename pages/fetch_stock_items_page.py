@@ -9,6 +9,7 @@ class FetchStockItemsPage(tk.Frame):
         super().__init__(parent)
         self.controller = controller
         self.branch_id = branch_id
+        print("branch----------------->",self.branch_id)
         self.token = token
         self.selected_business = selected_business
 
@@ -86,7 +87,7 @@ class FetchStockItemsPage(tk.Frame):
                         <TDLMESSAGE>
                             <COLLECTION NAME="List of Stock Items" ISINITIALIZE="Yes">
                                 <TYPE>Stock item</TYPE>
-                                <ADD>CHILD OF : Electronics</ADD>
+                                <ADD>CHILD OF : Books</ADD>
                                 <NATIVEMETHOD>Name</NATIVEMETHOD>
                                 <NATIVEMETHOD>Parent</NATIVEMETHOD>
                                 <NATIVEMETHOD>OpeningBalance</NATIVEMETHOD>
@@ -108,12 +109,13 @@ class FetchStockItemsPage(tk.Frame):
         cleaned_response = response.text.replace('&', '&amp;')
         root = ET.fromstring(cleaned_response)
 
-        stock_items = []
+        stock_items = {}
         for item in root.findall('.//COLLECTION/STOCKITEM'):
             name = item.attrib['NAME']
             parent = item.find('PARENT').text.strip().replace("&#4; ", "") if item.find('PARENT') is not None else ''
             opening_balance = item.find('OPENINGBALANCE').text
-            sell_price = item.find('OPENINGVALUE').text
+            opening_balance = int(opening_balance.split()[0])
+            sell_price = item.find('OPENINGVALUE').text.replace("-","")
             uom= item.find('BASEUNITS').text
             type_of_supply = item.find('GSTTYPEOFSUPPLY').text
             gst_rate = None
@@ -122,13 +124,13 @@ class FetchStockItemsPage(tk.Frame):
             items = []
             opening_stock = []
 
-            gst_details = item.find('GSTDETAILS.LIST')
-            if gst_details is not None:
-                for rate_detail in gst_details.findall('.//RATEDETAILS.LIST'):
-                    gst_rate_head = rate_detail.find('GSTRATEDUTYHEAD').text.strip()
-                    if gst_rate_head == 'IGST':
-                        gst_rate = rate_detail.find('GSTRATE').text.strip()
-                        break
+            # gst_details = item.find('GSTDETAILS.LIST')
+            # if gst_details is not None:
+            #     for rate_detail in gst_details.findall('.//RATEDETAILS.LIST'):
+            #         gst_rate_head = rate_detail.find('GSTRATEDUTYHEAD').text.strip()
+            #         if gst_rate_head == 'IGST':
+            #             gst_rate = rate_detail.find('GSTRATE').text.strip()
+            #             break
 
             hsn_details = item.find('HSNDETAILS.LIST')
             if hsn_details is not None:
@@ -140,27 +142,40 @@ class FetchStockItemsPage(tk.Frame):
                 for loc in item.findall('BATCHALLOCATIONS.LIST'):
                     sub_location = loc.find('GODOWNNAME').text.strip()
                     stock = loc.find('OPENINGBALANCE').text.strip()
+                    stock = int(stock.split()[0])
                     opening_stock.append({"sub_location_name": sub_location, "stock": stock})
 
             items.append({
-                "item_id": "null",
+                "item_id": None,
                 "name": name,
                 "sell_price": sell_price,
                 "quantity": opening_balance,
                 "hsn_code": hsn_code,
                 "desc": desc,
-                "remarks": "null",
-                "opening_stock": opening_stock
+                "remarks": None,
+                "taxes":[],
+                "opening_stock": opening_stock,
+                "low_stock_alert": 0
             })
-            stock_items.append(
-                {
+
+            if parent in stock_items:
+                stock_items[parent]["items"].append(items[0])
+            else:
+                stock_items[parent]={
                     "item_group_name": parent,
                     "item_type": type_of_supply,
                     "uom": uom,
-                    "gst_rate": gst_rate,
                     "items": items
                 }
-            )
 
-        output_json = json.dumps(stock_items, indent=4)
-        print(output_json)
+        output_json = json.dumps(list(stock_items.values())[0], indent=4)
+        self.send_data_to_api(output_json)
+
+    def send_data_to_api(self, output_json):
+        headers = {"Content-Type": "application/json","Authorization": f"Bearer {self.token['token']}", "X-Business-Id": self.selected_business,"x-location-id": self.branch_id}
+        response = requests.post( "https://api-dev.wortal.co/api/tally_items", data=output_json, headers=headers)
+
+        if response.status_code == 200:
+            messagebox.showinfo("Success", "Data sent successfully")
+        else:
+            print(f"Error: {response.status_code} {response.text}")
