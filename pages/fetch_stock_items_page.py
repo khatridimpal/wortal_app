@@ -19,7 +19,7 @@ class FetchStockItemsPage(tk.Frame):
         def back_to_branch_page():
             self.controller.show_business_page(self.token)
 
-        self.fetch_stock_items_frame = tk.Frame(self, bg='#f5f5f5')
+        self.fetch_stock_items_frame = tk.Frame(self, bg='#f5f5f5', padx=20, pady=20)
         self.fetch_stock_items_frame.pack(expand=True, fill='both')
 
         custom_font = font.Font(family="Helvetica", size=12)
@@ -37,7 +37,7 @@ class FetchStockItemsPage(tk.Frame):
         branch_names = [branch["name"] for branch in branches]
 
         header_label = tk.Label(self.fetch_stock_items_frame, text="Fetch Stock Items", font=("Helvetica", 18, "bold"),fg="#333333", bg="#f5f5f5")
-        header_label.pack(pady=20)
+        header_label.pack(pady=(0, 20))
 
         branch_frame = tk.Frame(self.fetch_stock_items_frame, bg="#f5f5f5")
         branch_frame.pack(pady=10)
@@ -184,7 +184,6 @@ class FetchStockItemsPage(tk.Frame):
                 }
 
         output_json = json.dumps(list(stock_items.values())[0], indent=4)
-        print("output_json======================>",output_json)
         self.send_data_to_api(output_json)
 
     def send_data_to_api(self, output_json):
@@ -195,3 +194,4 @@ class FetchStockItemsPage(tk.Frame):
             messagebox.showinfo("Success", "Data sent successfully")
         else:
             print(f"Error: {response.status_code} {response.text}")
+            self.after(3600000, self.fetch_data)
