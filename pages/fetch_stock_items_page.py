@@ -57,7 +57,7 @@ class FetchStockItemsPage(tk.Frame):
         button_frame = tk.Frame(self.fetch_stock_items_frame, bg="#f5f5f5")
         button_frame.pack(pady=20)
 
-        self.submit_button = tk.Button(button_frame, text="Fetch Data", font=custom_font, bg="#4CAF50", fg="#ffffff", command=self.fetch_data, relief="raised")
+        self.submit_button = tk.Button(button_frame, text="Sink", font=custom_font, bg="#4CAF50", fg="#ffffff", command=self.fetch_data, relief="raised")
         self.submit_button.pack(side="left", padx=10)
 
         self.back_button = tk.Button(button_frame, text='Back', font=custom_font, bg="#f44336", fg="#ffffff", command=back_to_branch_page, relief="raised")
@@ -118,19 +118,34 @@ class FetchStockItemsPage(tk.Frame):
             sell_price = item.find('OPENINGVALUE').text.replace("-","")
             uom= item.find('BASEUNITS').text
             type_of_supply = item.find('GSTTYPEOFSUPPLY').text
-            gst_rate = None
             hsn_code = None
             desc = None
             items = []
             opening_stock = []
+            taxes=[]
+            gst_details = item.find('GSTDETAILS.LIST')
+            if gst_details is not None:
+                previous_range_to = 0
+                for rate_detail in gst_details.findall('.//GSTSLABRATES.LIST'):
+                    if rate_detail is not None:
+                        taxability_element = rate_detail.find('TAXABILITY')
+                        if taxability_element is not None and taxability_element.text.strip():
+                            rate = rate_detail.find('TOITEMRATE').text.strip()
+                            for data in rate_detail.findall('./RATEDETAILS.LIST'):
+                                gst_rate_head = data.find('GSTRATEDUTYHEAD').text.strip()
+                                if gst_rate_head == 'IGST':
+                                    gst_rate = data.find('GSTRATE').text.strip()
+                                    taxes.append({"name":"Slab Rate","range_from":previous_range_to,"range_to": rate,"rate": gst_rate})
+                                    previous_range_to = rate
+                        else:
+                            for rate_detail in gst_details.findall('.//RATEDETAILS.LIST'):
+                                gst_rate_head = rate_detail.find('GSTRATEDUTYHEAD').text.strip()
+                                if gst_rate_head == 'IGST':
+                                    gst_rate = rate_detail.find('GSTRATE').text.strip()
+                                    taxes.append({"name":"Item Rate","range_from":"0","range_to": "0","rate":gst_rate})
+                                    break
 
-            # gst_details = item.find('GSTDETAILS.LIST')
-            # if gst_details is not None:
-            #     for rate_detail in gst_details.findall('.//RATEDETAILS.LIST'):
-            #         gst_rate_head = rate_detail.find('GSTRATEDUTYHEAD').text.strip()
-            #         if gst_rate_head == 'IGST':
-            #             gst_rate = rate_detail.find('GSTRATE').text.strip()
-            #             break
+
 
             hsn_details = item.find('HSNDETAILS.LIST')
             if hsn_details is not None:
@@ -153,7 +168,7 @@ class FetchStockItemsPage(tk.Frame):
                 "hsn_code": hsn_code,
                 "desc": desc,
                 "remarks": None,
-                "taxes":[],
+                "taxes":taxes,
                 "opening_stock": opening_stock,
                 "low_stock_alert": 0
             })
@@ -169,6 +184,7 @@ class FetchStockItemsPage(tk.Frame):
                 }
 
         output_json = json.dumps(list(stock_items.values())[0], indent=4)
+        print("output_json======================>",output_json)
         self.send_data_to_api(output_json)
 
     def send_data_to_api(self, output_json):
